@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Template;
+use App\TemplateItem;
 use Illuminate\Http\Request;
 
 class TemplateController extends Controller
@@ -14,26 +15,93 @@ class TemplateController extends Controller
     
     public function index() {
 		$data = Template::all();
-		return response($data);
+		$res = (object) ['links'=>(object)[], 'data'=>(object)[]];
+		$res->meta = (object) ['count'=>10, 'total'=>count($data)];
+		return response()->json($res, 200);
 	}
 
 	public function detail($id) {
-		$data = Template::where('id',$id)->get();
-		return response ($data);
+		$main = Template::find($id);
+		$details = $main->items;
+		$res = (object) [
+			'type' => 'templates',
+			'id' => ''.$id.'',
+			'links' => (object) ['self' => url("/checklists/templates/{$id}")]
+		];
+		$res->attributes = (object)[
+			'name' => $main['name'],
+			'checklist' => (object) [
+				'description' => $main['description'],
+				'due_interval' => $main['due_interval'],
+				'due_unit' => $main['due_unit']
+			],
+			'items' => $details
+		];
+		
+		return response()->json(['data'=>$res], 200);
 	}
 
 	public function create(Request $request) {
-		$dt = json_decode($request->getContent(), true);
+		$req = json_decode($request->getContent());
 		
-		$data = new Template();
-		$data->name = $dt['data']['attributes']['name'];
-		$data->description = $dt['data']['attributes']['checklist']['description'];
-		$data->due_interval = $dt['data']['attributes']['checklist']['due_interval'];
-		$data->due_unit = $dt['data']['attributes']['checklist']['due_unit'];
-		$data->save();
+		$db = new Template();
+		$db->name = $req->data->attributes->name;
+		$db->description = $req->data->attributes->checklist->description;
+		$db->due_interval = $req->data->attributes->checklist->due_interval;
+		$db->due_unit = $req->data->attributes->checklist->due_unit;
+		
+		if ($db->save()) {
+			for ($i=0; $i<count($req->data->attributes->items); $i++) {
+				$item = $req->data->attributes->items[$i];
+				
+				$dbdt = new TemplateItem();
+				$dbdt->template_id = $db->id;
+				$dbdt->description = $item->description;
+				$dbdt->urgency = $item->urgency;
+				$dbdt->due_interval = $item->due_interval;
+				$dbdt->due_unit = $item->due_unit;
+				$dbdt->save();
+			}
+		}
+		
+		$resp = $req;
+		$resp->data->id = $db->id;
 
-		return response('Berhasil Tambah Data');
+		return response()->json($resp, 201);
 	}
+	
+	public function update($id, Request $request) {
+		$req = json_decode($request->getContent());
+		
+		$db = Template::find($id);
+		$db->name = $req->data->name;
+		$db->description = $req->data->checklist->description;
+		$db->due_interval = $req->data->checklist->due_interval;
+		$db->due_unit = $req->data->checklist->due_unit;
+		
+		if ($db->save()) {
+			TemplateItem::where('template_id', $id)->delete();
+			
+			for ($i=0; $i<count($req->data->items); $i++) {
+				$item = $req->data->items[$i];
+				
+				$dbdt = new TemplateItem();
+				$dbdt->template_id = $db->id;
+				$dbdt->description = $item->description;
+				$dbdt->urgency = $item->urgency;
+				$dbdt->due_interval = $item->due_interval;
+				$dbdt->due_unit = $item->due_unit;
+				$dbdt->save();
+			}
+		}
+		
+		$resp = (object) ['id'=>$id, 'attributes'=>$req];
 
-    //
+		return response()->json(['data'=>$resp], 200);
+	}
+	
+	public function delete($id) {
+		Template::find($id)->delete();
+		return response('Deleted', 204);
+	}
 }

@@ -12,5 +12,12 @@ class Template extends Model
         'name', 'description', 'due_interval', 'due_unit',
     ];
     
-    protected $hidden = [];
+    protected $hidden = [
+		'created_at', 'updated_at',
+    ];
+    
+    public function items()
+    {
+        return $this->hasMany('App\TemplateItem');
+    }
 }
