@@ -15,7 +15,7 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->group(['prefix' => 'api'], function () use ($router) {
+$router->group(['middleware' => 'auth'], function () use ($router) {
 	$router->get('checklists/templates',  ['uses' => 'TemplateController@index']);
 	$router->get('checklists/templates/{id}', ['uses' => 'TemplateController@detail']);
 	$router->post('checklists/templates', ['uses' => 'TemplateController@create']);

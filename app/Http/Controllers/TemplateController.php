@@ -13,10 +13,31 @@ class TemplateController extends Controller
         //
     }
     
-    public function index() {
-		$data = Template::all();
-		$res = (object) ['links'=>(object)[], 'data'=>(object)[]];
-		$res->meta = (object) ['count'=>10, 'total'=>count($data)];
+    public function index(Request $request) {
+		if (!empty($request->query('page_limit'))) {
+			$limit = $request->query('page_limit');
+		} else {
+			$limit = 10;
+		}
+		
+		if (!empty($request->query('page_offset'))) {
+			$offset = $request->query('page_offset');
+		} else {
+			$offset = 0;
+		}
+			
+		$data = Template::paginate($limit);
+		
+		$res = (object) [
+			'links'=>(object)[
+				'first' => '',
+				'last' => '',
+				'next' => '',
+				'prev' => ''
+			],
+			'data'=>$data
+		];
+		$res->meta = (object) ['count'=>$limit, 'total'=>count($data)];
 		return response()->json($res, 200);
 	}
 
