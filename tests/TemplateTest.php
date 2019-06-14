@@ -38,11 +38,20 @@ class TemplateTest extends TestCase
     {
         $user = new User;
         
-        $this->actingAs($user)->get('/checklists/templates/3');
+        $this->actingAs($user)->get('/checklists/templates/4');
         $this->assertResponseOk();
         $this->seeJsonStructure([
             'data'
         ]);
+
+    }
+    
+    public function testDelete()
+    {
+        $user = new User;
+        
+        $this->actingAs($user)->delete('/checklists/templates/6');
+        $this->assertEquals(204, $this->response->status());
 
     }
 }
