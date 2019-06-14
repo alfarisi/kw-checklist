@@ -26,7 +26,21 @@ class TemplateController extends Controller
 			$offset = 0;
 		}
 			
-		$data = Template::paginate($limit);
+		$data = Template::all();
+		$newdata = array();
+		
+		for ($i=0; $i<count($data); $i++) {
+			$item = TemplateItem::where('template_id', $data[$i]['id'])->get();
+			$newdata[$i] = (object)[
+				'name'=>$data[$i]['name'],
+				'checklist'=>(object) [
+					'description'=>$data[$i]['description'],
+					'due_interval'=>$data[$i]['due_interval'],
+					'due_unit'=>$data[$i]['due_unit']
+				],
+				'items'=>$item
+			];
+		}
 		
 		$res = (object) [
 			'links'=>(object)[
@@ -35,7 +49,7 @@ class TemplateController extends Controller
 				'next' => '',
 				'prev' => ''
 			],
-			'data'=>$data
+			'data'=>$newdata
 		];
 		$res->meta = (object) ['count'=>$limit, 'total'=>count($data)];
 		return response()->json($res, 200);
