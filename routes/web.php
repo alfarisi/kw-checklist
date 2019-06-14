@@ -21,5 +21,5 @@ $router->group(['middleware' => 'auth'], function () use ($router) {
 	$router->post('checklists/templates', ['uses' => 'TemplateController@create']);
 	$router->delete('checklists/templates/{id}', ['uses' => 'TemplateController@delete']);
 	$router->patch('checklists/templates/{id}', ['uses' => 'TemplateController@update']);
-	$router->post('checklists/templates/{id}/assigns', ['uses' => 'TemplateController@assign']);
+	//$router->post('checklists/templates/{id}/assigns', ['uses' => 'TemplateController@assign']);
 });
